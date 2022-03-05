@@ -1,0 +1,45 @@
+---
+title: "Assessment 1"
+author: "Jiin Nam s4658895"
+date: '2022-03-05'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+#install.packages(knitr)
+library(knitr)
+
+#install.packages("skimr")
+library(skimr)
+
+#install.packages("lubridate")
+library(lubridate)
+
+```
+
+# RMarkdown editing
+
+***R Markdown is a file formatting tool that is written in plain text format. It contains R codes that can be used to format or edit texts.***
+
+Link to [fastfood](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-09-04/fastfood_calories.csv)
+
+## First 10 Rows
+
+```{r}
+"fastfood" <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-09-04/fastfood_calories.csv')
+
+kable(fastfood [1:5,])
+
+  
+```
+
+## First 10 Rows and 5 variables
+
+```{r}
+
+head(fastfood[1:5], 10)
+```
