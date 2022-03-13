@@ -56,7 +56,8 @@ fastfood %>% filter(calories > 1000)
 
 ```{r}
 
-dont_eat_this %>% filter(total_fat > 40, total_carb > 80) %>% select( restaurant, item, total_fat, total_carb) %>%  arrange(desc(total_carb))
+dont_eat_this <-
+fastfood %>% filter(total_fat > 40, total_carb > 80) %>% select( restaurant, item, total_fat, total_carb) %>%  arrange(desc(total_carb))
 
 ```
 
