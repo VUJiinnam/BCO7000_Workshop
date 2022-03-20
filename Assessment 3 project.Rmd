@@ -1,0 +1,250 @@
+---
+title: "Assessment 1"
+author: "Jiin Nam s4658895"
+date: '2022-03-05'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+#install.packages(knitr)
+library(knitr)
+
+#install.packages("skimr")
+library(skimr)
+
+#install.packages("lubridate")
+library(lubridate)
+
+```
+
+# RMarkdown editing
+
+***R Markdown is a file formatting tool that is written in plain text format. It contains R codes that can be used to format or edit texts.***
+
+Link to [fastfood](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-09-04/fastfood_calories.csv)
+
+## First 10 Rows
+
+```{r}
+"fastfood" <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-09-04/fastfood_calories.csv')
+
+kable(fastfood [1:5,])
+
+  
+```
+
+## First 10 Rows and 5 variables
+
+```{r}
+
+head(fastfood[1:5], 10)
+```
+
+## Part 2
+
+Fastfood items with more than 1000 calories.
+
+```{r}
+fastfood %>% filter(calories > 1000)
+```
+
+##Total fat and carb
+
+```{r}
+dont_eat_this <-
+fastfood %>% filter(total_fat > 40, total_carb > 80) %>% select( restaurant, item, total_fat, total_carb) %>% arrange(desc(total_carb))
+
+```
+
+## Calories and Food type sorted in descending order
+
+```{r}
+
+fastfood %>%
+  select(restaurant, item, calories) %>%
+  arrange (desc(calories)) %>%
+  mutate(Heavy_Food = case_when(
+      calories > 500 ~ 'Heavy',
+      calories < 250 ~ 'Low',
+      TRUE ~ 'Average')) 
+
+```
+
+## Food calories type frequency count
+
+```{r}
+fastfood %>%
+  select(restaurant, item, calories) %>%
+  arrange (desc(calories)) %>%
+  mutate(Heavy_Food = case_when(
+      calories > 500 ~ 'Heavy',
+      calories < 250 ~ 'Low',
+      TRUE ~ 'Average')) %>%
+  count(Heavy_Food) %>%
+  arrange(n)
+
+```
+
+## Display variables using Skimr
+
+```{r}
+library(skimr)
+skim(fastfood)
+```
+
+```{r}
+fastfood %>% 
+  count(restaurant) %>%
+  arrange(desc(n))
+```
+
+```{r}
+fastfood %>%
+  count(item) %>%
+  arrange(item)
+```
+
+## Average Calories of each restaurant
+
+```{r}
+fastfood %>%
+  group_by(restaurant) %>%
+  summarize(calories = mean(calories)) %>% 
+  arrange(desc(calories))
+```
+
+##Average calories, max fat and min cholesterol
+
+```{r}
+fastfood %>% 
+  group_by(restaurant) %>%
+  summarize(average_calories = mean(calories)) %>% 
+  arrange(desc(average_calories))
+```
+
+```{r}
+fastfood %>% 
+  group_by(restaurant) %>%
+  summarize(max_fat = max(total_fat)) %>% 
+  arrange(desc(max_fat))
+```
+
+```{r}
+fastfood %>% 
+  group_by(restaurant) %>%
+  summarize(min_cholesterol = min(cholesterol)) %>% 
+  arrange(desc(min_cholesterol))
+```
+
+## Data Visualisation
+
+```{r}
+fastfood %>%
+  group_by(restaurant) %>%
+  mutate(restaurant = fct_reorder(restaurant, total_fat)) %>%
+ggplot(aes(restaurant, total_fat)) + geom_col() + coord_flip() + xlab("") + theme_bw()
+```
+
+A bar graph is best suited to visually displaying the the total fat per restaurant as it summarizes big quantities of data into observable form. It also allows for easier comparison of total fats between two or more restaurants.
+
+##Cholesterol Sodium
+
+```{r}
+fastfood %>%
+  group_by(restaurant) %>%
+  mutate(cholesterol_sodium = sum(cholesterol, sodium)) %>%
+  select(restaurant, item, cholesterol, sodium, cholesterol_sodium)
+  "Salad" = NULL
+
+```
+## Scatterplot - sugar against protein
+```{r}
+fastfood %>%
+  ggplot(aes(protein, sugar)) + geom_point(aes(size = protein)) + geom_abline(color = "blue") 
+```
+## Identify variables
+```{r}
+skim(fastfood)
+
+```
+
+```{r}
+fastfood$restaurant <-  as.factor(fastfood$restaurant)
+class(fastfood$restaurant)
+```
+
+```{r}
+fastfood$item <-  as.factor(fastfood$item)
+class(fastfood$item)
+```
+
+```{r}
+fastfood$salad <-  as.factor(fastfood$salad)
+class(fastfood$salad)
+```
+```{r}
+skim(fastfood)
+```
+
+## Create two new variables
+```{r}
+Calories_type <- 
+  cut_number(fastfood$calories, 3, labels=c("low", "med", "high"), ordered_result = TRUE)
+
+
+saveRDS(Calories_type, file="Calories_type")
+```
+
+```{r}
+fastfood <- cbind(fastfood, Calories_type)
+```
+
+
+```{r}
+fastfood %>%
+  group_by(restaurant) %>%
+summarise(restaurant, Calories_type)
+```
+
+
+```{r}
+fastfood %>%
+ggplot(aes(x=restaurant, y=Calories_type, fill=restaurant)) + ggtitle("Calories Type by Restaurant") + theme_minimal() + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank()) + 
+geom_jitter(show.legend = FALSE, width=0.2, shape= 21) + facet_grid(cols=vars(restaurant)) 
+```
+
+##Trans_fat Percent
+```{r}
+Trans_fat_percent <- (fastfood$trans_fat/fastfood$total_fat*100)
+
+fastfood %>%
+  ggplot(aes(x=restaurant, y=trans_fat, fill=restaurant)) + geom_col(show.legend=FALSE, width=0.9) + ggtitle("Trans Fat by Restaurant") + facet_grid(cols=vars(restaurant)) + theme_minimal() +  theme(axis.ticks.x = element_blank(), axis.text.x = element_blank())
+
+saveRDS(Trans_fat_percent, file="Trans_fat_percent")
+```
+
+```{r}
+fastfood <- cbind(fastfood, Trans_fat_percent)
+```
+##Show Mean of Total Fat per restaurant
+```{r}
+fastfood %>% 
+  group_by(restaurant) %>%
+  summarize(Total_fat = mean(total_fat)) %>% 
+  arrange(desc(Total_fat)) 
+```
+
+##Data viz of Total Fat
+```{r}
+fastfood %>%
+  ggplot(aes(x=restaurant, y=total_fat, fill=restaurant)) + geom_col(show.legend=FALSE, width=0.9) + ggtitle("Total Fat per restaurant") + theme_minimal()
+
+```
+
+
+
+
