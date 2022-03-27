@@ -1,0 +1,193 @@
+---
+title: "Assignment2"
+author: "Jiin Nam s4658895"
+date: '2022-03-23'
+output: html_document
+---
+
+[i] Jiin Nam [/i]
+##*s24658895*
+
+----
+
+#Assignment 2
+
+-----
+###1 Kable
+```{r}
+library(tidymodels)
+library(tidyverse)
+library(knitr)
+library(skimr)
+library(lubridate)
+
+'thanksgiving0' <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-11-20/thanksgiving_meals.csv')
+
+kable(thanksgiving0 [1:10,])
+
+```
+### 2. Skim
+```{r}
+skim(thanksgiving0)
+```
+In order to predict family income based on the menu, the most useful variables are: main dish, main dish other, main prep and sides. The more expensive or numerous the main meal and sides are, the more likely it is that the participant earns higher income rates. The data types of main dish and sides are categorised as characters, and since they are characteristic values, these makes them the correct data type. 
+
+In order to predict a community type or US region based on the menu, variables such as family income, age and whether travel during the thanksgiving season. It is more likely that the more urbanised or populated the US region or community type is, the more the participants will get higher income and therefore be able to travel more. The Travel column is correctly categorised as character but family income should be numerical as it is measured and identified by its numerical values rather than characteristics. 
+
+### 3. Reorder
+```{r}
+thanksgiving0 %>%
+mutate(family_income = fct_reorder(family_income, parse_number(family_income)))
+```
+
+```{r}
+thanksgiving <- 
+  thanksgiving0 %>%
+mutate(family_income = fct_reorder(family_income, parse_number(family_income)))
+```
+```{r}
+class(thanksgiving$family_income)
+```
+
+###4 Number of people who celebrate
+```{r}
+sum(thanksgiving$celebrate == "Yes")
+```
+980 people celebrate thanksgiving in total.
+
+###5.Categories of main dish and prep
+```{r}
+thanksgiving %>%
+  group_by(main_dish, main_prep) %>%
+  count(main_dish, main_prep) %>%
+  arrange(desc(n))
+```
+The categories of main dishes are character variables and most commonly fall under Turkey or ham and pork. The two most popular preparation method for the dish is either by baking or by roasting the main meals.
+
+### 6. Data Viz
+```{r}
+thanksgiving %>%
+  group_by(main_dish) %>%
+  ggplot(aes(x=main_dish, y=main_prep, color = main_dish)) + geom_jitter(show.legend=TRUE, width = 0.4) + ggtitle("Main Dish and how they are prepared") + theme_minimal() + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank())
+```
+
+```{r}
+thanksgiving %>%
+  group_by(main_dish) %>%
+  ggplot(aes(x=main_dish, y=main_prep, color = main_dish)) + geom_count(show.legend=TRUE, width = 1) + ggtitle("Main Dish and how they are prepared") + theme_minimal() + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank())
+```
+
+```{r}
+thanksgiving %>%
+  group_by(main_dish) %>%
+  ggplot(aes(x=main_dish, y=main_prep, fill = main_dish)) + coord_fixed() +  geom_raster(show.legend=TRUE, width = 1) + ggtitle("Main Dish and how they are prepared") + theme_minimal() + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank())
+```
+According to the generated data visualisations, the turkeys are the most popular main dishes that are served during thanksgiving. The most popular preparation methods for Turkey is by roasting or by baking. The least popular dish and method it is prepared is the Tofurkey which is specified by Other means that does not include baking or roasting. 
+
+###7. How many use cranberry/gravy
+```{r}
+thanksgiving %>%
+  select(gravy) %>%
+  filter(thanksgiving$gravy == "Yes") %>%
+  count(gravy)
+```
+
+```{r}
+thanksgivingcberry <- thanksgiving %>%
+  select(cranberry, cranberry_other) %>% 
+  filter(cranberry !=("None")) %>%
+  count(cranberry) 
+
+thanksgivingcberry2 <- thanksgiving %>%
+  select(cranberry_other) %>% 
+  filter(cranberry_other !=("NA")) %>%
+  count(cranberry_other) 
+```
+
+```{r}
+cbind(thanksgivingcberry) %>%
+  bind_rows(summarise(., across(where(is.numeric), sum), across(where(is.character), ~"Total")))
+```
+
+
+```{r}
+cbind(thanksgivingcberry2) %>%
+  bind_rows(summarise(., across(where(is.numeric), sum), across(where(is.character), ~"Total")))
+```
+892 people use gravy, while a total of 853 people use cranberry sauce. 
+
+###8 - 9. Income distribution of those who celebrate
+```{r}
+thanksgiving %>%
+  group_by(family_income) %>%
+  filter(celebrate == "Yes") %>%
+  ggplot(aes(x=family_income, y=celebrate, ylim="Yes", fill=family_income)) + geom_col(show.legend=TRUE, width=0.9) + ggtitle("Income distribution of those who celebrate") + theme_minimal()
+
+```
+
+The income distribution of those who celebrate thanksgiving seems to be most concentrated around the average income of $25,000 to $49,999. There are less people with lower income that celebrates thanksgiving than there are high-income people, with the lower-income population earning most commonly around $100,000 to $124,999. 
+
+###10.Use following code to create new data set
+```{r}
+thanksgiving2 <- thanksgiving %>%
+select(id, starts_with("side"),
+         starts_with("pie"),
+         starts_with("dessert")) %>%
+  select(-side15, -pie13, -dessert12) %>%
+  gather(type, value, -id) %>%
+  filter(!is.na(value),
+         !value %in% c("None", "Other (please specify)")) %>%
+  mutate(type = str_remove(type, "\\d+"))
+
+```
+The following code specifically picks desserts and sweets from the side category and combines them into one column. Then it removes them so that they are filtered out of the final output. Any NA data is removed as well. The final output dataset shows the different types of sides the participants have during the thanksgiving ceremony, which includes sides such as brussel sprouts and cornbread. 
+##11 - 12 Install package "widyr"
+```{r}
+install.packages("widyr")
+library(widyr)
+```
+Pairwise_cor function calculates the frequencies of the two variables appearing together and thus draws a correlation between the two values to signify how strongly correlated they are to each other. . It is used most often when trying to determine whether the variables are significantly different from each other.
+
+```{r}
+thanksgiving2 %>%
+pairwise_cor(value, id, sort = TRUE)
+
+```
+
+
+This insight shows the correlation between two different sides that are most frequently used during thanksgiving meals. 
+
+###13 Predict family income
+
+
+```{r}
+
+model <- randomForest(family_income ~ age, data = thanksgiving, na.action=na.omit)
+
+print(model)
+```
+```{r}
+model2 <- randomForest(family_income ~ age + community_type, data = thanksgiving, na.action=na.omit)
+
+print(model2)
+```
+
+```{r}
+model3 <- randomForest(family_income ~ age + gender, data = thanksgiving, na.action=na.omit)
+
+print(model3)
+```
+
+I used different variables to determine the correlation between the family income and other factors such as age, gender and community type. I predicted that the more closer to the age of a young adult, the more likely they are to earn a higher income as they are more energetic and have more job opportunities than the older individuals. Similarly, I also predicted that people who are male and live in urbanised areas would be more likely to have higher income as they will typically be paid more than their female counterparts. 
+
+I believe that the best model is model3 as it has the lowest error rate between the three models and the variables used to create the model are more concentrated towards determining whether an individual's physical factors such as age or gender affects their ability to earn higher income.
+
+
+
+```{r}
+install.packages("randomForest")
+```
+
+```{r}
+library(randomForest)
+```
